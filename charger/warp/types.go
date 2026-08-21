@@ -8,6 +8,7 @@ const (
 	FeatureMeterPhases    = "meter_phases"
 	FeatureNfc            = "nfc"
 	FeaturePhaseSwitch    = "phase_switch"
+	FeatureCPDisconnect   = "cp_disconnect"
 )
 
 // https://www.warp-charger.com/api.html#evse_state

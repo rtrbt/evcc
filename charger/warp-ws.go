@@ -333,6 +333,10 @@ func (w *WarpWS) handleEvent(topic string, payload json.RawMessage) error {
 			implement.Has(w, implement.PhaseGetter(w.getPhases))
 		}
 
+		if hasFeature(warp.FeatureCPDisconnect) {
+			implement.Has(w, implement.Resurrector(w.WakeUp))
+		}
+
 	case metersValueIDsTopic:
 		var ids []warp.Mvid
 		if err = json.Unmarshal(payload, &ids); err != nil {
@@ -622,7 +626,6 @@ func (w *WarpWS) ChargeDuration() (time.Duration, error) {
 	})
 }
 
-
 // GetMinMaxCurrent implements the api.CurrentLimiter interface
 func (w *WarpWS) GetMinMaxCurrent() (float64, float64, error) {
 	maxC, err := readWSData(w, func() (float64, error) {
@@ -638,6 +641,17 @@ func (w *WarpWS) callAPI(api string, payload any) error {
 	req, _ := request.New(http.MethodPost, uri, request.MarshalJSON(payload), request.JSONEncoding)
 	_, err := w.Do(req)
 	return err
+}
+
+// WakeUp implements the api.Resurrector interface
+func (w *WarpWS) WakeUp() error {
+	err := w.callAPI("evse/control_pilot_disconnect", true)
+	if err != nil {
+		return err
+	}
+
+	time.Sleep(5 * time.Second)
+	return w.callAPI("evse/control_pilot_disconnect", false)
 }
 
 func (w *WarpWS) setCurrent(curr int64) error {
